@@ -1,0 +1,1 @@
+Real-time bank transaction pipeline built with Kafka, Spark, PostgreSQL, dbt, Airflow, and Metabase. Streams live transactions, applies custom fraud-detection rules, and surfaces insights on a live dashboard — built to learn end-to-end data engineering from scratch.
