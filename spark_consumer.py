@@ -35,6 +35,7 @@ raw_stream = spark.readStream \
     .option("kafka.bootstrap.servers", "localhost:9092") \
     .option("subscribe", "bank-transactions") \
     .option("startingOffsets", "earliest") \
+    .option("maxOffsetsPerTrigger", "50") \
     .load()
 
 parsed_stream = raw_stream.selectExpr("CAST(value AS STRING) as json_value") \
