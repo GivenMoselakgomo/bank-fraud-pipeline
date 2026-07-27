@@ -1,3 +1,4 @@
+import psycopg2
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, from_json, to_json, when, to_timestamp, datediff 
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType
@@ -55,23 +56,59 @@ fraud_flagged = parsed_stream \
     .withColumn("is_flagged",
         when(col("fraud_score") >= 1, True).otherwise(False))
 
-POSTGRES_URL = "jdbc:postgresql://localhost:5432/bankpipeline"
-POSTGRES_PROPERTIES = {
+POSTGRES_CONN_PARAMS = {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "bankpipeline",
     "user": "bankuser",
     "password": "bankpass",
-    "driver": "org.postgresql.Driver",
 }
 
 def write_to_postgres(batch_df, batch_id):
-    deduped_df = batch_df.dropDuplicates(["TransactionID"])    
+    deduped_df = batch_df.dropDuplicates(["TransactionID"])
+    rows = deduped_df.collect()
     print(f"Writing batch {batch_id}: {batch_df.count()} rows received, "
-          f"{deduped_df.count()} after deduplication...")
-    deduped_df.write.jdbc(
-        url=POSTGRES_URL,
-        table="raw_transactions",
-        mode="append",
-        properties=POSTGRES_PROPERTIES,
-    )
+          f"{len(rows)} after in-batch deduplication...")
+
+    if not rows:
+        return
+
+    conn = psycopg2.connect(**POSTGRES_CONN_PARAMS)
+    cur = conn.cursor()
+
+    insert_sql = """
+        INSERT INTO raw_transactions (
+            "TransactionID", "AccountID", "TransactionAmount", "TransactionDate",
+            "TransactionType", "Location", "DeviceID", "IP Address", "MerchantID",
+            "Channel", "CustomerAge", "CustomerOccupation", "TransactionDuration",
+            "LoginAttempts", "AccountBalance", "PreviousTransactionDate",
+            flag_excessive_logins, flag_large_amount_vs_balance,
+            flag_rapid_large_transaction, flag_dormant_reactivation,
+            fraud_score, is_flagged
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s
+        )
+        ON CONFLICT ("TransactionID") DO NOTHING
+    """
+
+    values = [
+        (
+            r["TransactionID"], r["AccountID"], r["TransactionAmount"], r["TransactionDate"],
+            r["TransactionType"], r["Location"], r["DeviceID"], r["IP Address"], r["MerchantID"],
+            r["Channel"], r["CustomerAge"], r["CustomerOccupation"], r["TransactionDuration"],
+            r["LoginAttempts"], r["AccountBalance"], r["PreviousTransactionDate"],
+            r["flag_excessive_logins"], r["flag_large_amount_vs_balance"],
+            r["flag_rapid_large_transaction"], r["flag_dormant_reactivation"],
+            r["fraud_score"], r["is_flagged"],
+        )
+        for r in rows
+    ]
+
+    cur.executemany(insert_sql, values)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 query = fraud_flagged.writeStream \
     .foreachBatch(write_to_postgres) \
