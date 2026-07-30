@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .kaggle/
 *.zip
+bank_fraud_dbt/logs/
+bank_fraud_dbt/target/
