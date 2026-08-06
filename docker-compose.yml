@@ -17,6 +17,8 @@ services:
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+    networks:
+      - pipeline_net
 
   postgres:
     image: postgres:16
@@ -29,6 +31,122 @@ services:
       - POSTGRES_DB=bankpipeline
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - pipeline_net
+
+  airflow-postgres:
+    image: postgres:16
+    container_name: airflow-postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - airflow_pgdata:/var/lib/postgresql/data
+    networks:
+      - pipeline_net
+
+  airflow-init:
+    image: apache/airflow:2.9.3
+    container_name: airflow-init
+    depends_on:
+      - airflow-postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Given \
+          --lastname Moselakgomo \
+          --role Admin \
+          --email admin@example.com || true
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./bank_fraud_dbt:/opt/airflow/dbt
+    networks:
+      - pipeline_net
+
+  airflow-webserver:
+    image: apache/airflow:2.9.3
+    container_name: airflow-webserver
+    depends_on:
+      - airflow-init
+    restart: always
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
+      - "_PIP_ADDITIONAL_REQUIREMENTS=dbt-core==1.8.2 dbt-postgres==1.8.2"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./bank_fraud_dbt:/opt/airflow/dbt
+      - ./logs:/opt/airflow/logs
+    command: webserver
+    networks:
+      - pipeline_net
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.3
+    container_name: airflow-scheduler
+    depends_on:
+      - airflow-init
+    restart: always
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - "_PIP_ADDITIONAL_REQUIREMENTS=dbt-core==1.8.2 dbt-postgres==1.8.2"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./bank_fraud_dbt:/opt/airflow/dbt
+      - ./logs:/opt/airflow/logs
+    command: scheduler
+
+  metabase-postgres:
+    image: postgres:16
+    container_name: metabase-postgres
+    environment:
+      - POSTGRES_USER=metabase
+      - POSTGRES_PASSWORD=metabase
+      - POSTGRES_DB=metabase
+    volumes:
+      - metabase_pgdata:/var/lib/postgresql/data
+    networks:
+      - pipeline_net
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    depends_on:
+      - metabase-postgres
+      - postgres
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=metabase
+      - MB_DB_PORT=5432
+      - MB_DB_USER=metabase
+      - MB_DB_PASS=metabase
+      - MB_DB_HOST=metabase-postgres
+    ports:
+      - "3000:3000"
+    networks:
+      - pipeline_net
+
+networks:
+  pipeline_net:
+    driver: bridge
 
 volumes:
   pgdata:
+  airflow_pgdata:
+  metabase_pgdata:

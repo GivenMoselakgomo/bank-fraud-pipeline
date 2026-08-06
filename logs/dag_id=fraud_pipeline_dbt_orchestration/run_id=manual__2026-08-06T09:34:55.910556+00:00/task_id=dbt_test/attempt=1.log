@@ -1,0 +1,26 @@
+[2026-08-06T09:36:28.834+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-08-06T09:36:28.862+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: fraud_pipeline_dbt_orchestration.dbt_test manual__2026-08-06T09:34:55.910556+00:00 [queued]>
+[2026-08-06T09:36:28.871+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: fraud_pipeline_dbt_orchestration.dbt_test manual__2026-08-06T09:34:55.910556+00:00 [queued]>
+[2026-08-06T09:36:28.871+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 3
+[2026-08-06T09:36:28.887+0000] {taskinstance.py:2330} INFO - Executing <Task(BashOperator): dbt_test> on 2026-08-06 09:34:55.910556+00:00
+[2026-08-06T09:36:28.893+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'fraud_pipeline_dbt_orchestration', 'dbt_test', 'manual__2026-08-06T09:34:55.910556+00:00', '--job-id', '47', '--raw', '--subdir', 'DAGS_FOLDER/fraud_dbt_dag.py', '--cfg-path', '/tmp/tmp9yt1q9bi']
+[2026-08-06T09:36:28.896+0000] {standard_task_runner.py:91} INFO - Job 47: Subtask dbt_test
+[2026-08-06T09:36:28.897+0000] {logging_mixin.py:188} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:62 DeprecationWarning: This process (pid=448) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-08-06T09:36:28.897+0000] {standard_task_runner.py:64} INFO - Started process 449 to run task
+[2026-08-06T09:36:28.945+0000] {task_command.py:426} INFO - Running <TaskInstance: fraud_pipeline_dbt_orchestration.dbt_test manual__2026-08-06T09:34:55.910556+00:00 [running]> on host c17a5fd5dbf1
+[2026-08-06T09:36:29.040+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='given' AIRFLOW_CTX_DAG_ID='fraud_pipeline_dbt_orchestration' AIRFLOW_CTX_TASK_ID='dbt_test' AIRFLOW_CTX_EXECUTION_DATE='2026-08-06T09:34:55.910556+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-08-06T09:34:55.910556+00:00'
+[2026-08-06T09:36:29.041+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-08-06T09:36:29.063+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2026-08-06T09:36:29.065+0000] {subprocess.py:75} INFO - Running command: ['/usr/bin/bash', '-c', 'dbt test --project-dir /opt/***/dbt --profiles-dir /opt/***/dbt --target docker']
+[2026-08-06T09:36:29.073+0000] {subprocess.py:86} INFO - Output:
+[2026-08-06T09:36:33.230+0000] {subprocess.py:93} INFO - [0m09:36:33  Running with dbt=1.8.2
+[2026-08-06T09:36:33.686+0000] {subprocess.py:93} INFO - [0m09:36:33  Registered adapter: postgres=1.8.2
+[2026-08-06T09:36:34.566+0000] {subprocess.py:93} INFO - [0m09:36:34  Found 2 models, 428 macros
+[2026-08-06T09:36:34.569+0000] {subprocess.py:93} INFO - [0m09:36:34
+[2026-08-06T09:36:34.571+0000] {subprocess.py:93} INFO - [0m09:36:34  Nothing to do. Try checking your model configs and model specification args
+[2026-08-06T09:36:36.509+0000] {subprocess.py:97} INFO - Command exited with return code 0
+[2026-08-06T09:36:36.511+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-08-06T09:36:36.570+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=fraud_pipeline_dbt_orchestration, task_id=dbt_test, run_id=manual__2026-08-06T09:34:55.910556+00:00, execution_date=20260806T093455, start_date=20260806T093628, end_date=20260806T093636
+[2026-08-06T09:36:36.614+0000] {local_task_job_runner.py:243} INFO - Task exited with return code 0
+[2026-08-06T09:36:36.652+0000] {taskinstance.py:3503} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-08-06T09:36:36.662+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

@@ -1,0 +1,23 @@
+bank_fraud_dbt:
+  target: dev
+  outputs:
+
+    dev:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: bankuser
+      password: bankpass
+      dbname: bankpipeline
+      schema: public
+      threads: 4
+
+    docker:
+      type: postgres
+      host: postgres
+      port: 5432
+      user: bankuser
+      password: bankpass
+      dbname: bankpipeline
+      schema: public
+      threads: 4
